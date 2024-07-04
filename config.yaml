@@ -1,0 +1,23 @@
+llm:
+  provider: ollama
+  config:
+#    model: 'qwen2:7b'
+    model: 'llama3:8b'
+    temperature: 0.5
+    top_p: 1
+#    stream: true
+    base_url: 'http://localhost:11434'
+embedder:
+  provider: ollama
+  config:
+    model: "all-minilm:latest"
+    base_url: 'http://localhost:11434'
+vectordb:
+  provider: chroma
+  config:
+    collection_name: 'my-collection'
+    dir: db
+    allow_reset: true
+app:
+  config:
+    id: "morpheus"
