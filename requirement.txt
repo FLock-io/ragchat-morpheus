@@ -1,0 +1,3 @@
+embedchain
+ollama
+langchain_community
