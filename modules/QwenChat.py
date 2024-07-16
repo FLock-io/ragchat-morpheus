@@ -1,12 +1,22 @@
 import requests
 from typing import List, Optional
+from ollama import Client
 
-DEFAULT_PROMPT_TEMPLATE = """Reference Information: {context}
-Please answer the question based on the above reference information. The previous reference information may be useful or not; you need to select the content that might be relevant to the question to provide a basis for your answer.
-The answer must be faithful to the original text, concise but without losing information, and do not fabricate anything if there is no relevant content in the reference information.
-Please respond in English.
-Question: {question}
-"""
+DEFAULT_PROMPT = """
+You are a Q&A expert system. Your responses must always be rooted in the context provided for each query. Here are some guidelines to follow:
+
+1. Refrain from explicitly mentioning the context provided in your response.
+2. The context should silently guide your answers without being directly acknowledged.
+3. Do not use phrases such as 'According to the context provided', 'Based on the context, ...' etc.
+
+Context information:
+----------------------
+{context}
+----------------------
+
+Query: {question}
+Answer:
+"""  # noqa:E501
 
 
 class AnswerResult:
@@ -15,37 +25,31 @@ class AnswerResult:
 
 
 class QwenChat():
-    def __init__(self):
+    def __init__(self, server_url="http://localhost:11434/api/chat", model_name="qwen2:1.5b"):
         super().__init__()
-        self.prompt_template = DEFAULT_PROMPT_TEMPLATE
-        self.server_url = "http://localhost:11434/api/generate"
-        self.model_name = "qwen2:1.5b"
+        self.prompt_template = DEFAULT_PROMPT
+        self.client = Client(host=server_url)
+        self.model_name = model_name
 
-    async def stream_chat(self, prompt: str, history: List[List[str]] = [], **kw):
+    def stream_chat(self, prompt: str, context: str, history: List = []):
 
-        msg_history = []
-        # msg_history.append({"role": "system", "content": self.config["system"]})
-        if len(history) > 0:
-            for q, a in history:
-                msg_history.append({"role": "user", "content": q})
-                msg_history.append({"role": "assistant", "content": a})
-        msg_history.append({"role": "user", "content": prompt})
-        headers = {'Content-Type': 'application/json'}
-        chat_response = requests.post(self.server_url,
-                                      headers=headers,
-                                      json=msg_history)
-        history += [[]]
+        # if len(history) > 0:
+        #     for q, a in history:
+        #         msg_history.append({"role": "user", "content": q})
+        #         msg_history.append({"role": "assistant", "content": a})
+        history.append({"role": "user",
+                        "content": self.prompt_template.replace("{context}", context).
+                       replace("{question}", prompt)})
+        chat_response = self.client.chat(
+            model=self.model_name,
+            stream=True,
+            messages=history)
+
         for chunk in chat_response:
-            choices = chunk.choices[0]
-            if chunk.choices[0].finish_reason == "stop":
+            if chunk["done"] == True:
                 break
             else:
-                r = choices.delta.content
-                if r is None:
-                    r = ""
-                history[-1] = [prompt, r]
-                answer_result = AnswerResult()
-                answer_result.history = history
-                answer_result.llm_output = {"answer": r}
-                yield answer_result
-
+                result = chunk["message"]["content"]
+                if result is None:
+                    result = ""
+                yield result
