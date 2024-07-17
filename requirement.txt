@@ -2,4 +2,3 @@ embedchain
 ollama
 langchain_community
 gradio
-Flask

@@ -1,5 +1,7 @@
 import os
-
+from modules.embedding_model import OllamaEmbed
+from modules.vector_db import ChromaDB
+from modules.QwenChat import QwenChat
 
 def main():
     while True:
@@ -13,19 +15,17 @@ def main():
         print(query)
 
         ## retrieval
-        from modules.embedding_model import OllamaEmbed
+
         emb = OllamaEmbed()
-        from modules.vector_db import ChromaDB
+
         vectordb = ChromaDB(directory=r"db")
         vectordb.set_collection_name(name="my-collection", embedding_fn=emb.langchain_default_concept())
-
-        knb = vectordb.query([query], 3, {}, False)
+        knb = vectordb.query([query], 3, {'app_id': 'morpheus'}, False)
 
         ## rerank
 
-        ## chat stream
-        from modules.QwenChat import QwenChat
 
+        ## chat stream
         llm_chat = QwenChat()
         result = llm_chat.stream_chat(prompt=query, context='\n'.join(knb), history=history)
         for chunk in result:

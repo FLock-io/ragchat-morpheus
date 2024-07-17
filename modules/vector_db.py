@@ -159,18 +159,14 @@ class ChromaDB():
         try:
             if skip_embedding:
                 result = self.collection.query(
-                    query_embeddings=[
-                        input_query,
-                    ],
+                    query_embeddings=input_query,
                     n_results=n_results,
                     where=self._generate_where_clause(where),
                     **kwargs,
                 )
             else:
                 result = self.collection.query(
-                    query_texts=[
-                        input_query,
-                    ],
+                    query_texts=input_query,
                     n_results=n_results,
                     where=self._generate_where_clause(where),
                     **kwargs,
