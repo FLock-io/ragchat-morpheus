@@ -2,3 +2,4 @@ embedchain
 ollama
 langchain_community
 gradio
+FlagEmbedding
