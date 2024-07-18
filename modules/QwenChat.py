@@ -53,3 +53,15 @@ class QwenChat():
                 if result is None:
                     result = ""
                 yield result
+
+    def chat(self, prompt: str, context: str, history: List = []):
+
+        history.append({"role": "user",
+                        "content": self.prompt_template.replace("{context}", context).
+                       replace("{question}", prompt)})
+        chat_response = self.client.chat(
+            model=self.model_name,
+            messages=history)
+
+        return chat_response["message"]["content"]
+
