@@ -2,7 +2,7 @@
 from modules.embedding_model import OllamaEmbed
 from modules.vector_db import ChromaDB
 from modules.rerank_model import BaseRank,XinferenceRerank
-from modules.QwenChat import QwenChat
+from modules.LLMChat import OllamaChat
 
 
 
@@ -31,7 +31,7 @@ def main():
         knb_rerank = [knb[i] for i in index]
 
         ## chat stream
-        llm_chat = QwenChat()
+        llm_chat = OllamaChat()
         result = llm_chat.stream_chat(prompt=query, context='\n'.join(knb_rerank), history=history)
         for chunk in result:
             print(chunk, end="", flush=True)

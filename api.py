@@ -1,8 +1,13 @@
 import json
 import time
+import os
+import sys
+# if linux
+if os.name == 'posix':
+    __import__('pysqlite3')
+    sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 
 from typing import Optional, List, Dict
-
 from pydantic import BaseModel, Field
 
 from starlette.responses import StreamingResponse
@@ -10,7 +15,8 @@ from fastapi import FastAPI, HTTPException, Request
 from modules.embedding_model import OllamaEmbed
 from modules.vector_db import ChromaDB
 from modules.rerank_model import BaseRank, XinferenceRerank
-from modules.QwenChat import QwenChat
+from modules.LLMChat import OllamaChat
+
 
 app = FastAPI(title="OpenAI-compatible API")
 
@@ -29,24 +35,9 @@ class ChatCompletionRequest(BaseModel):
     stream: Optional[bool] = False
 
 
-async def _resp_async_generator(request):
-    history = []
-    if len(request.messages) > 1:
-        history = [{'role': temp.role, 'content': temp.content} for temp in request.messages[:-1]]
-    query = request.messages[-1].content
-
-    emb = OllamaEmbed()
-    vectordb = ChromaDB(directory=r"db")
-    vectordb.set_collection_name(name="my-collection", embedding_fn=emb.langchain_default_concept())
-    knb = vectordb.query([query], 3, {'app_id': 'morpheus'}, False)
-
-    ## rerank
-    rerank_model = BaseRank()
-    index = rerank_model.text_pair_sort(query, knb)
-    knb_rerank = [knb[i] for i in index]
-
+async def _resp_async_generator(request, query, knb_rerank, history):
     ## chat stream
-    llm_chat = QwenChat()
+    llm_chat = OllamaChat()
     result = llm_chat.stream_chat(prompt=query, context='\n'.join(knb_rerank), history=history)
 
     for i, token in enumerate(result):
@@ -63,28 +54,28 @@ async def _resp_async_generator(request):
 
 @app.post("/chat/completions")
 async def chat_completions(request: ChatCompletionRequest):
+    history = []
+    if len(request.messages) > 1:
+        history = [{'role': temp.role, 'content': temp.content} for temp in request.messages[:-1]]
+    query = request.messages[-1].content
+    emb = OllamaEmbed()
+
+    vectordb = ChromaDB(directory=r"db")
+    vectordb.set_collection_name(name="my-collection", embedding_fn=emb.langchain_default_concept())
+    knb = vectordb.query([query], 3, {'app_id': 'morpheus'}, False)
+
+    ## rerank
+    rerank_model = BaseRank()
+    index = rerank_model.text_pair_sort(query, knb)
+    knb_rerank = [knb[i] for i in index]
+
     if request.stream:
         return StreamingResponse(
-            _resp_async_generator(request), media_type="application/x-ndjson"
+            _resp_async_generator(request, query, knb_rerank, history), media_type="application/x-ndjson"
         )
     else:
-        history = []
-        if len(request.messages) > 1:
-            history = [{'role': temp.role, 'content': temp.content} for temp in request.messages[:-1]]
-        query = request.messages[-1].content
-        emb = OllamaEmbed()
-
-        vectordb = ChromaDB(directory=r"db")
-        vectordb.set_collection_name(name="my-collection", embedding_fn=emb.langchain_default_concept())
-        knb = vectordb.query([query], 3, {'app_id': 'morpheus'}, False)
-
-        ## rerank
-        rerank_model = BaseRank()
-        index = rerank_model.text_pair_sort(query, knb)
-        knb_rerank = [knb[i] for i in index]
-
-        ## chat stream
-        llm_chat = QwenChat()
+        ## chat
+        llm_chat = OllamaChat()
         result = llm_chat.chat(prompt=query, context='\n'.join(knb_rerank), history=history)
 
         return {

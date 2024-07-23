@@ -111,7 +111,7 @@ class ChromaDB():
                     ids=ids[i: i + self.BATCH_SIZE],
                 )
 
-    def _format_result(self, results: QueryResult) -> list[tuple[Document, float]]:
+    def _format_result(self, results: QueryResult) -> List[Tuple[Document, float]]:
         """
         Format Chroma results
 

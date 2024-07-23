@@ -24,8 +24,8 @@ class AnswerResult:
     llm_output: Optional[dict] = None
 
 
-class QwenChat():
-    def __init__(self, server_url="http://localhost:11434/api/chat", model_name="llama3:8b"):
+class OllamaChat():
+    def __init__(self, server_url="http://ollama:11434/api/chat", model_name="llama3:8b"):
         super().__init__()
         self.prompt_template = DEFAULT_PROMPT
         self.client = Client(host=server_url)

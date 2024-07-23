@@ -1,5 +1,9 @@
 embedchain
+chromadb==0.5.3
+pysqlite3-binary
 ollama
 langchain_community
 gradio
 FlagEmbedding
+fastapi
+tiktoken
