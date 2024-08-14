@@ -16,6 +16,8 @@ feature_min_score = 0.52
 
 encoder = tiktoken.encoding_for_model("gpt-3.5-turbo")
 
+device_is_cpu = True
+
 
 def get_home_cache_dir():
     dir = os.path.join(os.path.expanduser('~'), ".FLock")
@@ -45,13 +47,18 @@ class BaseRank():
     def __init__(self, model_name='BAAI/bge-reranker-base'):
         try:
             self.model = FlagReranker(os.path.join(get_home_cache_dir(), re.sub(r"^[a-zA-Z]+/", "", model_name)),
-                                      use_fp16=torch.cuda.is_available())
+                                      use_fp16=False if device_is_cpu else torch.cuda.is_available(),
+                                      device='cpu' if device_is_cpu else None
+                                      )
         except Exception as e:
             model_dir = snapshot_download(repo_id=model_name,
                                           local_dir=os.path.join(get_home_cache_dir(),
                                                                  re.sub(r"^[a-zA-Z]+/", "", model_name)),
                                           local_dir_use_symlinks=False)
-            self.model = FlagReranker(model_dir, use_fp16=torch.cuda.is_available())
+            self.model = FlagReranker(model_dir,
+                                      use_fp16=False if device_is_cpu else torch.cuda.is_available(),
+                                      device='cpu' if device_is_cpu else None
+                                      )
 
     def text_pair_sort(self, query: str, compare: List) -> List[int]:
         pairs = [(query, truncate(t, 2048)) for t in compare]
@@ -90,7 +97,8 @@ class XinferenceRerank():
                                  json=payload)
         if response.status_code == 200:
             sort_scores = response.json()["results"]
-            knb_index = [index for index, score in enumerate(sort_scores) if score['relevance_score'] > feature_min_score]
+            knb_index = [index for index, score in enumerate(sort_scores) if
+                         score['relevance_score'] > feature_min_score]
             return knb_index
         else:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="text rerank server error")

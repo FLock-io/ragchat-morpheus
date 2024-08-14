@@ -25,7 +25,7 @@ class AnswerResult:
 
 
 class OllamaChat():
-    def __init__(self, server_url="http://ollama:11434/api/chat", model_name="llama3:8b"):
+    def __init__(self, server_url, model_name):
         super().__init__()
         self.prompt_template = DEFAULT_PROMPT
         self.client = Client(host=server_url)

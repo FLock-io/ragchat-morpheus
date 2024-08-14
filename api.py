@@ -2,6 +2,7 @@ import json
 import time
 import os
 import sys
+
 # if linux
 if os.name == 'posix':
     __import__('pysqlite3')
@@ -16,7 +17,6 @@ from modules.embedding_model import OllamaEmbed
 from modules.vector_db import ChromaDB
 from modules.rerank_model import BaseRank, XinferenceRerank
 from modules.LLMChat import OllamaChat
-
 
 app = FastAPI(title="OpenAI-compatible API")
 
@@ -37,7 +37,7 @@ class ChatCompletionRequest(BaseModel):
 
 async def _resp_async_generator(request, query, knb_rerank, history):
     ## chat stream
-    llm_chat = OllamaChat()
+    llm_chat = OllamaChat(server_url="http://ollama:11434/api/chat", model_name="llama3:8b")
     result = llm_chat.stream_chat(prompt=query, context='\n'.join(knb_rerank), history=history)
 
     for i, token in enumerate(result):
@@ -58,7 +58,7 @@ async def chat_completions(request: ChatCompletionRequest):
     if len(request.messages) > 1:
         history = [{'role': temp.role, 'content': temp.content} for temp in request.messages[:-1]]
     query = request.messages[-1].content
-    emb = OllamaEmbed()
+    emb = OllamaEmbed(url="http://ollama:11434", model_name="all-minilm:latest")
 
     vectordb = ChromaDB(directory=r"db")
     vectordb.set_collection_name(name="my-collection", embedding_fn=emb.langchain_default_concept())
@@ -75,7 +75,7 @@ async def chat_completions(request: ChatCompletionRequest):
         )
     else:
         ## chat
-        llm_chat = OllamaChat()
+        llm_chat = OllamaChat(server_url="http://ollama:11434/api/chat", model_name="llama3:8b")
         result = llm_chat.chat(prompt=query, context='\n'.join(knb_rerank), history=history)
 
         return {
@@ -89,4 +89,5 @@ async def chat_completions(request: ChatCompletionRequest):
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8000)
