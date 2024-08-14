@@ -1,9 +1,9 @@
-embedchain
+embedchain==0.0.41
 chromadb==0.5.3
-pysqlite3-binary
-ollama
-langchain_community
-gradio
-FlagEmbedding
-fastapi
-tiktoken
+pysqlite3-binary==0.5.3
+ollama==0.3.0
+langchain_community==0.2.9
+gradio==4.39.0
+FlagEmbedding==1.2.10
+fastapi==0.111.1
+tiktoken==0.7.0
