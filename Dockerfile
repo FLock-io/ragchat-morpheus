@@ -11,7 +11,7 @@ WORKDIR /app
 
 COPY . .
 
-RUN pip3 install -r requirement.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+RUN pip3 install -r requirement.txt
 
 EXPOSE 8000
 
