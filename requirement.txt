@@ -7,3 +7,4 @@ gradio==4.39.0
 FlagEmbedding==1.2.10
 fastapi==0.111.1
 tiktoken==0.7.0
+transformers==4.42.4
