@@ -7,11 +7,6 @@ services:
       - "8000:8000"
     depends_on:
       - ollama
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - capabilities: [ gpu ]
     networks:
       - chat-network
 
