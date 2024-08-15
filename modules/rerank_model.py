@@ -44,7 +44,7 @@ def num_tokens_from_string(string: str) -> int:
 
 
 class BaseRank():
-    def __init__(self, model_name='BAAI/bge-reranker-base'):
+    def __init__(self, model_name: str):
         try:
             self.model = FlagReranker(os.path.join(get_home_cache_dir(), re.sub(r"^[a-zA-Z]+/", "", model_name)),
                                       use_fp16=False if device_is_cpu else torch.cuda.is_available(),
