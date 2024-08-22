@@ -1,11 +1,4 @@
-FROM python:3.10
-
-RUN apt-get update && apt-get install -y \
-    python3-dev \
-    python3-pip \
-    && rm -rf /var/lib/apt/lists/*
-
-RUN ln -s /usr/bin/python3 /usr/bin/python
+FROM python:3.10-slim
 
 WORKDIR /app
 
