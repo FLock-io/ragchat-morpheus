@@ -1,0 +1,96 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mor-chat-staging
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: morpheus-chat
+  namespace: mor-chat-staging
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: morpheus-chat
+  template:
+    metadata:
+      labels:
+        app: morpheus-chat
+    spec:
+      containers:
+        - name: morpheus-chat
+          image: public.ecr.aws/e7z6j8c3/flock-mor:latest
+          ports:
+            - containerPort: 8000
+          imagePullPolicy: Always
+          resources:
+            requests:
+              cpu: "4"
+              memory: "6Gi"
+            limits:
+              cpu: "4"
+              memory: "8Gi"
+      restartPolicy: Always
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: morpheus-chat
+  namespace: mor-chat-staging
+spec:
+  selector:
+    app: morpheus-chat
+  ports:
+    - protocol: TCP
+      port: 8000
+      targetPort: 8000
+  type: ClusterIP
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ollama
+  namespace: mor-chat-staging
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ollama
+  template:
+    metadata:
+      labels:
+        app: ollama
+    spec:
+      containers:
+        - name: ollama
+          image: public.ecr.aws/e7z6j8c3/flock-mor:ollama
+          ports:
+            - containerPort: 11434
+          resources:
+            limits:
+              nvidia.com/gpu: 1
+              cpu: "3"
+              memory: "15Gi"
+            requests:
+              nvidia.com/gpu: 1
+              cpu: "3"
+              memory: "14Gi"
+          imagePullPolicy: Always
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ollama
+  namespace: mor-chat-staging
+spec:
+  selector:
+    app: ollama
+  ports:
+    - protocol: TCP
+      port: 11434
+      targetPort: 11434
